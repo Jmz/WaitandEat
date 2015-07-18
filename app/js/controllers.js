@@ -9,9 +9,9 @@ angular.module('myApp.controllers', [])
 
   }])
 
-  .controller('WaitlistController', ['$scope', '$firebase', function($scope, $firebase) {
+  .controller('WaitlistController', ['$scope', '$firebase', 'FIREBASE_URL', function($scope, $firebase, FIREBASE_URL) {
     
-  		var partiesRef = new Firebase('https://waitandeat1234.firebaseio.com/parties');
+  		var partiesRef = new Firebase(FIREBASE_URL + 'parties');
 
   		$scope.parties = $firebase(partiesRef);
 
@@ -29,7 +29,7 @@ angular.module('myApp.controllers', [])
       // Send a text message
       $scope.sendTextMessage = function(party) {
 
-        var textMessageRef = new Firebase('https://waitandeat1234.firebaseio.com/textMessages');
+        var textMessageRef = new Firebase(FIREBASE_URL + 'textMessages');
         var textMessages = new $firebase(textMessageRef);
         var newTextMessage = {
           phoneNumber: party.phone,
@@ -40,5 +40,45 @@ angular.module('myApp.controllers', [])
         party.notified = 'Yes';
         $scope.parties.$save(party.$id);
       };
+
+  }])
+
+  .controller('AuthController', ['$scope', '$firebaseSimpleLogin', '$location', 'FIREBASE_URL', function($scope, $firebaseSimpleLogin, $location, FIREBASE_URL) {
+
+    var authRef = new Firebase(FIREBASE_URL + 'textMessages');
+    var auth = $firebaseSimpleLogin(authRef);
+
+    $scope.user = {email: '', password: ''};
+
+    $scope.register = function() {
+
+      auth.$createUser($scope.user.email, $scope.user.password).then(
+        function(data) {
+          $scope.login();
+        },
+        function(data) {
+          console.log(data);
+        }
+      );
+
+    }
+
+    $scope.login = function() {
+
+      auth.$login('password', $scope.user).then(
+        function(data) {
+          $location.path('/waitlist');
+        },
+        function(data) {
+          console.log(data);
+        }
+      );
+
+    }
+
+    $scope.logout = function() {
+      auth.$logout();
+      $location.path('/');
+    }
 
   }]);
