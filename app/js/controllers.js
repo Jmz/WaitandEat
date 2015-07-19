@@ -9,36 +9,21 @@ angular.module('myApp.controllers', [])
 
   }])
 
-  .controller('WaitlistController', ['$scope', '$firebase', 'FIREBASE_URL', function($scope, $firebase, FIREBASE_URL) {
+  .controller('WaitlistController', ['$scope', 'partyService', 'textMessageService', function($scope, partyService, textMessageService) {
     
-  		var partiesRef = new Firebase(FIREBASE_URL + 'parties');
-
-  		$scope.parties = $firebase(partiesRef);
+      $scope.parties = partyService.parties;
 
   		$scope.newParty = { name: '', phone: '', size: '', done: false, notified: 'No' };
 
       // Save a new party
   		$scope.saveParty = function() {
-
-  			$scope.parties.$add($scope.newParty);
-
-  			$scope.newParty = { name: '', phone: '', size: '', done: false, notified: 'No' };
-
+        partyService.saveParty($scope.newParty);
+        $scope.newParty = { name: '', phone: '', size: '', done: false, notified: 'No' };
   		}
 
       // Send a text message
       $scope.sendTextMessage = function(party) {
-
-        var textMessageRef = new Firebase(FIREBASE_URL + 'textMessages');
-        var textMessages = new $firebase(textMessageRef);
-        var newTextMessage = {
-          phoneNumber: party.phone,
-          size: party.size,
-          name: party.name
-        };
-        textMessages.$add(newTextMessage);
-        party.notified = 'Yes';
-        $scope.parties.$save(party.$id);
+        textMessageService.sendTextMessage(party);
       };
 
   }])
