@@ -9,29 +9,39 @@ angular.module('myApp.services', [])
 	
 	.value('FIREBASE_URL', 'https://waitandeat1234.firebaseio.com/')
 
-	.factory('partyService', function($firebase, FIREBASE_URL) {
+	.factory('dataService', function($firebase, FIREBASE_URL) {
+		var dataRef = new Firebase(FIREBASE_URL);
+		var fireData = $firebase(dataRef);
 
-  		var partiesRef = new Firebase(FIREBASE_URL + 'parties');
-  		var parties = $firebase(partiesRef);
+		return fireData;
+	})
+
+	.factory('partyService', function(dataService) {
+
+			var users = dataService.$child('users');
 
   		var partyServiceObject = {
-  			parties: parties,
-  			saveParty: function(party) {
-	  			parties.$add(party);
-  			}
+  			
+  			saveParty: function(party, userId) {
+	  			users.$child(userId).$child('parties').$add(party);
+  			},
+
+				getPartiesByUserId: function(userId) {
+					return users.$child(userId).$child('parties');
+				}
+
   		};
 
   		return partyServiceObject;
 
 	})
 
-	.factory('textMessageService', function($firebase, FIREBASE_URL, partyService) {
+	.factory('textMessageService', function(dataService, partyService) {
 
-        var textMessageRef = new Firebase(FIREBASE_URL + 'textMessages');
-        var textMessages = new $firebase(textMessageRef);
+				var textMessages = dataService.$child('textMessages');
 
         var textMessageServiceObject = {
-      		sendTextMessage: function(party) {
+      		sendTextMessage: function(party, userId) {
 
     				var newTextMessage = {
           		phoneNumber: party.phone,
@@ -40,8 +50,7 @@ angular.module('myApp.services', [])
         		};
 
         		textMessages.$add(newTextMessage);
-        		party.notified = 'Yes';
-        		partyService.parties.$save(party.$id);
+        		partyService.getPartiesByUserId(userId).$child(party.$id).$update({notified: 'Yes'});
       		}
         }
 
@@ -79,6 +88,10 @@ angular.module('myApp.services', [])
 			logout: function() {
 				auth.$logout();
 	     	$location.path('/');
+			},
+
+			getCurrentUser: function() {
+				return auth.$getCurrentUser();
 			}
 
 		};
